@@ -50,8 +50,27 @@ export interface InventoryItem {
   currentStock: number;
   unit: string;
   safetyStock: number;
+  fixedStock: number; // 固定基準數量 (Số lượng cố định / Par Level target)
+  defaultRestockAmount: number; // 標準進貨數量 (Số lượng nhập hàng chuẩn / Standard batch restock lot)
+  totalRestocked: number; // 本期累計進貨入庫數量 (Số lượng nhập hàng tích lũy)
+  lastRestockAmount?: number; // 最近一次進貨數量
   costPerUnit: number; // in TWD
   lastRestocked: string;
+}
+
+export interface RestockRecord {
+  id: string;
+  itemId: string;
+  itemName: string;
+  category: string;
+  amount: number;
+  unit: string;
+  unitCost: number;
+  totalCost: number;
+  timestamp: string;
+  stockBefore: number;
+  stockAfter: number;
+  operator?: string;
 }
 
 export interface BOMIngredient {

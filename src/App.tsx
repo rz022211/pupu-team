@@ -5,15 +5,18 @@ import { InventoryTab } from './components/pos/InventoryTab';
 import { AnalyticsTab } from './components/pos/AnalyticsTab';
 import { BOMTab } from './components/pos/BOMTab';
 import { TeaLabTab } from './components/pos/TeaLabTab';
-import { POSCartItem, InventoryItem, CompletedOrder } from './types/pos';
-import { INITIAL_INVENTORY, INITIAL_ORDERS } from './data/posData';
+import { StoreContactModal } from './components/pos/StoreContactModal';
+import { POSCartItem, InventoryItem, CompletedOrder, RestockRecord } from './types/pos';
+import { INITIAL_INVENTORY, INITIAL_ORDERS, INITIAL_RESTOCK_RECORDS } from './data/posData';
 import { bobaAudio } from './utils/audio';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<POSTabType>('pos');
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isStoreContactOpen, setIsStoreContactOpen] = useState<boolean>(false);
   const [cartItems, setCartItems] = useState<POSCartItem[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY);
+  const [restockRecords, setRestockRecords] = useState<RestockRecord[]>(INITIAL_RESTOCK_RECORDS);
   const [orders, setOrders] = useState<CompletedOrder[]>(INITIAL_ORDERS);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -128,21 +131,112 @@ export default function App() {
   };
 
   // Inventory Restock handler
-  const handleRestock = (itemId: string, addAmount: number) => {
+  const handleRestock = (itemId: string, addAmount: number, operatorName: string = '門市人員') => {
+    const item = inventory.find((i) => i.id === itemId);
+    if (!item || addAmount <= 0) return;
+
+    const nowStr = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+    const fullDateStr = `今日 ${nowStr}`;
+
+    const newRecord: RestockRecord = {
+      id: `rst-${Date.now()}`,
+      itemId: item.id,
+      itemName: item.name,
+      category: item.category,
+      amount: addAmount,
+      unit: item.unit,
+      unitCost: item.costPerUnit,
+      totalCost: Math.round(addAmount * item.costPerUnit),
+      timestamp: fullDateStr,
+      stockBefore: item.currentStock,
+      stockAfter: item.currentStock + addAmount,
+      operator: operatorName,
+    };
+
+    setRestockRecords((prev) => [newRecord, ...prev]);
+
     setInventory((prev) =>
       prev.map((it) => {
         if (it.id === itemId) {
-          const nowStr = new Date().toLocaleTimeString('zh-TW', { hour12: false });
           return {
             ...it,
             currentStock: it.currentStock + addAmount,
-            lastRestocked: `今日 ${nowStr}`,
+            totalRestocked: (it.totalRestocked || 0) + addAmount,
+            lastRestockAmount: addAmount,
+            lastRestocked: fullDateStr,
           };
         }
         return it;
       })
     );
-    showToast('原物料進貨入庫已完成！');
+    showToast(`進貨成功：${item.name} +${addAmount} ${item.unit}`);
+  };
+
+  // Update Fixed Stock (Par Level)
+  const handleUpdateFixedStock = (itemId: string, newFixedStock: number) => {
+    setInventory((prev) =>
+      prev.map((it) => {
+        if (it.id === itemId) {
+          return { ...it, fixedStock: Math.max(1, newFixedStock) };
+        }
+        return it;
+      })
+    );
+    showToast('固定基準庫存數量已更新！');
+  };
+
+  // Bulk restock items to their target fixed stock
+  const handleBulkRestockToFixed = (itemIds?: string[]) => {
+    const targets = inventory.filter((it) => {
+      const matchId = !itemIds || itemIds.includes(it.id);
+      return matchId && it.currentStock < it.fixedStock;
+    });
+
+    if (targets.length === 0) {
+      showToast('目前所有物料均已達固定基準數量，無須補貨！');
+      return;
+    }
+
+    const nowStr = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+    const fullDateStr = `今日 ${nowStr}`;
+
+    const newRecords: RestockRecord[] = targets.map((item) => {
+      const needed = Math.round((item.fixedStock - item.currentStock) * 10) / 10;
+      return {
+        id: `rst-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        itemId: item.id,
+        itemName: item.name,
+        category: item.category,
+        amount: needed,
+        unit: item.unit,
+        unitCost: item.costPerUnit,
+        totalCost: Math.round(needed * item.costPerUnit),
+        timestamp: fullDateStr,
+        stockBefore: item.currentStock,
+        stockAfter: item.fixedStock,
+        operator: '一鍵配額補貨',
+      };
+    });
+
+    setRestockRecords((prev) => [...newRecords, ...prev]);
+
+    setInventory((prev) =>
+      prev.map((it) => {
+        const target = targets.find((t) => t.id === it.id);
+        if (target) {
+          const needed = Math.round((it.fixedStock - it.currentStock) * 10) / 10;
+          return {
+            ...it,
+            currentStock: it.fixedStock,
+            totalRestocked: (it.totalRestocked || 0) + needed,
+            lastRestockAmount: needed,
+            lastRestocked: fullDateStr,
+          };
+        }
+        return it;
+      })
+    );
+    showToast(`已一鍵將 ${targets.length} 項物料補滿至固定基準數量！`);
   };
 
   const cartItemCount = cartItems.reduce((acc, it) => acc + it.quantity, 0);
@@ -156,6 +250,7 @@ export default function App() {
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
         cartItemCount={cartItemCount}
+        onOpenStoreContact={() => setIsStoreContactOpen(true)}
       />
 
       {/* Main Tab Content Viewports */}
@@ -168,6 +263,7 @@ export default function App() {
             onRemoveItem={handleRemoveItem}
             onClearCart={handleClearCart}
             onCompleteOrder={handleCompleteOrder}
+            onOpenStoreContact={() => setIsStoreContactOpen(true)}
           />
         )}
 
@@ -181,13 +277,25 @@ export default function App() {
         )}
 
         {activeTab === 'inventory' && (
-          <InventoryTab inventory={inventory} onRestock={handleRestock} />
+          <InventoryTab
+            inventory={inventory}
+            restockRecords={restockRecords}
+            onRestock={handleRestock}
+            onUpdateFixedStock={handleUpdateFixedStock}
+            onBulkRestockToFixed={handleBulkRestockToFixed}
+          />
         )}
 
         {activeTab === 'analytics' && <AnalyticsTab orders={orders} />}
 
         {activeTab === 'bom' && <BOMTab />}
       </main>
+
+      {/* Store QR Code & Official Contact Modal */}
+      <StoreContactModal
+        isOpen={isStoreContactOpen}
+        onClose={() => setIsStoreContactOpen(false)}
+      />
 
       {/* Floating System Toast */}
       {toastMessage && (

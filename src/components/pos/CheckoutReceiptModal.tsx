@@ -312,8 +312,8 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
                 )}
               </div>
 
-              {/* Barcode / Carrier */}
-              <div className="pt-3 text-center space-y-2">
+              {/* Barcode / Carrier & Store QR Code */}
+              <div className="pt-3 text-center space-y-2.5">
                 {printedOrder.carrierNumber ? (
                   <div className="text-[11px] bg-stone-200 py-1 rounded">
                     電子發票載具：{printedOrder.carrierNumber}
@@ -323,7 +323,50 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
                     ||| | |||| || | ||| |||| |
                   </div>
                 )}
-                <div className="text-[10px] text-stone-500">
+
+                {/* Store QR Code & Contact on Receipt */}
+                <div className="pt-2 border-t border-dashed border-stone-300 flex items-center justify-center gap-3">
+                  <div className="p-1 bg-white border border-stone-300 rounded shadow-xs shrink-0">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-12 h-12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect width="100" height="100" fill="white" />
+                      <rect x="6" y="6" width="26" height="26" fill="#1C1F2A" rx="2" />
+                      <rect x="10" y="10" width="18" height="18" fill="white" rx="1" />
+                      <rect x="14" y="14" width="10" height="10" fill="#1C1F2A" />
+
+                      <rect x="68" y="6" width="26" height="26" fill="#1C1F2A" rx="2" />
+                      <rect x="72" y="10" width="18" height="18" fill="white" rx="1" />
+                      <rect x="76" y="14" width="10" height="10" fill="#1C1F2A" />
+
+                      <rect x="6" y="68" width="26" height="26" fill="#1C1F2A" rx="2" />
+                      <rect x="10" y="72" width="18" height="18" fill="white" rx="1" />
+                      <rect x="14" y="76" width="10" height="10" fill="#1C1F2A" />
+
+                      <rect x="38" y="10" width="6" height="6" fill="#1C1F2A" />
+                      <rect x="52" y="10" width="6" height="6" fill="#1C1F2A" />
+                      <rect x="10" y="38" width="6" height="6" fill="#1C1F2A" />
+                      <rect x="10" y="52" width="6" height="6" fill="#1C1F2A" />
+                      <rect x="38" y="38" width="24" height="24" fill="#D97706" rx="4" />
+                      <circle cx="50" cy="50" r="5" fill="white" />
+                      <rect x="70" y="44" width="8" height="12" fill="#1C1F2A" />
+                      <rect x="84" y="52" width="10" height="8" fill="#1C1F2A" />
+                      <rect x="42" y="72" width="12" height="8" fill="#1C1F2A" />
+                      <rect x="68" y="76" width="16" height="16" fill="#1C1F2A" rx="1" />
+                    </svg>
+                  </div>
+                  <div className="text-left text-[9px] text-stone-600 leading-tight space-y-0.5">
+                    <div className="font-bold text-stone-900">掃碼領 NT$50 迎賓券</div>
+                    <div>LINE官方帳號: @bobaflow_tw</div>
+                    <div>外送客服: 02-2723-8899</div>
+                    <div>台北市信義區松智路17號1F</div>
+                  </div>
+                </div>
+
+                <div className="text-[10px] text-stone-500 pt-1">
                   謝謝惠顧 · 請憑取餐單號至叫號區候餐
                 </div>
               </div>

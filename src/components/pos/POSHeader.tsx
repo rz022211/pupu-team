@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Store, Clock } from 'lucide-react';
+import { Volume2, VolumeX, Store, Clock, QrCode, Phone } from 'lucide-react';
 
 export type POSTabType = 'lab' | 'pos' | 'inventory' | 'analytics' | 'bom';
 
@@ -9,6 +9,7 @@ interface POSHeaderProps {
   isMuted: boolean;
   onToggleMute: () => void;
   cartItemCount: number;
+  onOpenStoreContact?: () => void;
 }
 
 export const POSHeader: React.FC<POSHeaderProps> = ({
@@ -17,6 +18,7 @@ export const POSHeader: React.FC<POSHeaderProps> = ({
   isMuted,
   onToggleMute,
   cartItemCount,
+  onOpenStoreContact,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
 
@@ -97,16 +99,28 @@ export const POSHeader: React.FC<POSHeaderProps> = ({
         })}
       </nav>
 
-      {/* Right System Info: Clock & Sound */}
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:flex items-center gap-1.5 text-xs text-stone-400 font-mono tabular-nums bg-[#1A1C23] px-2.5 py-1 rounded-lg border border-[#272B36]">
+      {/* Right System Info: Store QR & Contact, Clock & Sound */}
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {onOpenStoreContact && (
+          <button
+            onClick={onOpenStoreContact}
+            className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold bg-[#1F222D] hover:bg-[#282D3C] border border-amber-500/40 hover:border-amber-500 px-2.5 py-1.5 rounded-xl transition-all shadow-xs"
+            title="查看門市官方 QR Code 與聯絡方式"
+          >
+            <QrCode className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">門市 QR / 聯絡方式</span>
+            <span className="md:hidden">門市 QR</span>
+          </button>
+        )}
+
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-stone-400 font-mono tabular-nums bg-[#1A1C23] px-2.5 py-1.5 rounded-xl border border-[#272B36]">
           <Clock className="w-3.5 h-3.5 text-stone-500" />
           <span>{timeStr || '12:00:00'}</span>
         </div>
 
         <button
           onClick={onToggleMute}
-          className="p-1.5 text-stone-400 hover:text-white hover:bg-[#252934] rounded-lg transition-colors"
+          className="p-1.5 text-stone-400 hover:text-white hover:bg-[#252934] rounded-xl transition-colors"
           title={isMuted ? '取消靜音' : '開啟音效'}
           aria-label="Sound toggle"
         >

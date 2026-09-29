@@ -3,7 +3,7 @@ import { POSDrinkItem, POSCartItem, POSCategory, CompletedOrder } from '../../ty
 import { POS_DRINKS } from '../../data/posData';
 import { CustomizationModal } from './CustomizationModal';
 import { CheckoutReceiptModal } from './CheckoutReceiptModal';
-import { Search, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingBag, ArrowRight, Sparkles, AlertCircle, QrCode } from 'lucide-react';
 import { bobaAudio } from '../../utils/audio';
 
 interface POSCashierProps {
@@ -13,6 +13,7 @@ interface POSCashierProps {
   onRemoveItem: (cartItemId: string) => void;
   onClearCart: () => void;
   onCompleteOrder: (order: CompletedOrder) => void;
+  onOpenStoreContact?: () => void;
 }
 
 const CATEGORIES: { id: POSCategory; label: string }[] = [
@@ -32,6 +33,7 @@ export const POSCashier: React.FC<POSCashierProps> = ({
   onRemoveItem,
   onClearCart,
   onCompleteOrder,
+  onOpenStoreContact,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<POSCategory>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -87,7 +89,7 @@ export const POSCashier: React.FC<POSCashierProps> = ({
                 className="w-full bg-[#1B1D26] border border-[#2D313E] rounded-xl pl-9 pr-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500"
               />
               {searchQuery && (
-                <button
+                 <button
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-white"
                 >
@@ -95,6 +97,18 @@ export const POSCashier: React.FC<POSCashierProps> = ({
                 </button>
               )}
             </div>
+
+            {onOpenStoreContact && (
+              <button
+                onClick={onOpenStoreContact}
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#1B1D26] hover:bg-[#252837] border border-amber-500/35 hover:border-amber-500 text-amber-300 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors shadow-xs"
+                title="查看門市官方 QR Code 與聯絡方式"
+              >
+                <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">門市 QR / 官方聯絡</span>
+                <span className="sm:hidden">QR</span>
+              </button>
+            )}
 
             <div className="text-xs text-stone-400 font-mono hidden sm:block whitespace-nowrap">
               共 {filteredDrinks.length} 款品項
