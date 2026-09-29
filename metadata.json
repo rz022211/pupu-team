@@ -1,0 +1,8 @@
+{
+  "name": "pupu",
+  "description": "Streamline your custom bubble tea orders and track your favorite drink recipes with ease.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
