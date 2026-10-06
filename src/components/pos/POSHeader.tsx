@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Store, Clock, QrCode, Phone } from 'lucide-react';
+import { Volume2, VolumeX, Store, Clock, QrCode, Phone, Smartphone } from 'lucide-react';
 
-export type POSTabType = 'lab' | 'pos' | 'inventory' | 'analytics' | 'bom';
+export type POSTabType = 'lab' | 'pos' | 'inventory' | 'analytics' | 'bom' | 'members';
 
 interface POSHeaderProps {
   activeTab: POSTabType;
@@ -9,7 +9,9 @@ interface POSHeaderProps {
   isMuted: boolean;
   onToggleMute: () => void;
   cartItemCount: number;
+  memberCount?: number;
   onOpenStoreContact?: () => void;
+  onOpenPublicMemberPortal?: () => void;
 }
 
 export const POSHeader: React.FC<POSHeaderProps> = ({
@@ -18,7 +20,9 @@ export const POSHeader: React.FC<POSHeaderProps> = ({
   isMuted,
   onToggleMute,
   cartItemCount,
+  memberCount,
   onOpenStoreContact,
+  onOpenPublicMemberPortal,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
 
@@ -42,6 +46,7 @@ export const POSHeader: React.FC<POSHeaderProps> = ({
   const navItems: { id: POSTabType; label: string; badge?: number }[] = [
     { id: 'lab', label: '茶研所' },
     { id: 'pos', label: '前台收銀 POS', badge: cartItemCount > 0 ? cartItemCount : undefined },
+    { id: 'members', label: '會員中心', badge: memberCount },
     { id: 'inventory', label: '後台庫存與補貨' },
     { id: 'analytics', label: '銷售分析報表' },
     { id: 'bom', label: '配方BOM管理' },
@@ -99,17 +104,28 @@ export const POSHeader: React.FC<POSHeaderProps> = ({
         })}
       </nav>
 
-      {/* Right System Info: Store QR & Contact, Clock & Sound */}
+      {/* Right System Info: Public Portal, Store QR & Contact, Clock & Sound */}
       <div className="flex items-center gap-2 sm:gap-2.5">
+        {onOpenPublicMemberPortal && (
+          <button
+            onClick={onOpenPublicMemberPortal}
+            className="flex items-center gap-1.5 text-xs text-amber-200 font-semibold bg-gradient-to-r from-amber-600/30 to-amber-700/30 hover:from-amber-600/50 hover:to-amber-700/50 border border-amber-500/50 hover:border-amber-400 px-2.5 py-1.5 rounded-xl transition-all shadow-xs"
+            title="開啟顧客個人會員線上申請獨立網頁 (獨立網真)"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden xl:inline">個人會員申請網真 ↗</span>
+            <span className="xl:hidden">會員申請 ↗</span>
+          </button>
+        )}
+
         {onOpenStoreContact && (
           <button
             onClick={onOpenStoreContact}
-            className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold bg-[#1F222D] hover:bg-[#282D3C] border border-amber-500/40 hover:border-amber-500 px-2.5 py-1.5 rounded-xl transition-all shadow-xs"
+            className="flex items-center gap-1.5 text-xs text-stone-300 hover:text-white font-medium bg-[#1F222D] hover:bg-[#282D3C] border border-[#2D3242] hover:border-amber-500/40 px-2.5 py-1.5 rounded-xl transition-all shadow-xs"
             title="查看門市官方 QR Code 與聯絡方式"
           >
             <QrCode className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">門市 QR / 聯絡方式</span>
-            <span className="md:hidden">門市 QR</span>
+            <span className="hidden md:inline">門市 QR</span>
           </button>
         )}
 

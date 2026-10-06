@@ -15,12 +15,14 @@ import {
   Instagram,
   Printer,
   Share2,
+  Smartphone,
 } from 'lucide-react';
 import { bobaAudio } from '../../utils/audio';
 
 interface StoreContactModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenPublicMemberPortal?: () => void;
 }
 
 type QRType = 'line' | 'instagram' | 'wifi' | 'menu';
@@ -28,6 +30,7 @@ type QRType = 'line' | 'instagram' | 'wifi' | 'menu';
 export const StoreContactModal: React.FC<StoreContactModalProps> = ({
   isOpen,
   onClose,
+  onOpenPublicMemberPortal,
 }) => {
   const [activeQR, setActiveQR] = useState<QRType>('line');
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -440,6 +443,33 @@ export const StoreContactModal: React.FC<StoreContactModalProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Quick Member Online Registration Banner */}
+            {onOpenPublicMemberPortal && (
+              <div className="p-4 bg-gradient-to-r from-amber-950/40 via-[#1C1F2B] to-[#161820] border border-amber-500/40 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-white">個人會員線上申辦獨立網真</h4>
+                    <p className="text-[11px] text-stone-300 truncate">
+                      提供顧客專屬申請網頁，顧客申辦後於門市結帳直接報手機號碼即可集點！
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenPublicMemberPortal();
+                  }}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white rounded-xl text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1 shadow-sm shrink-0"
+                >
+                  <span>立即開啟</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

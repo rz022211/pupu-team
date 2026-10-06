@@ -91,6 +91,56 @@ export interface BOMRecipe {
   marginPercent: number;
 }
 
+export interface MemberCoupon {
+  id: string;
+  title: string;
+  description: string;
+  discountAmount: number;
+  pointsRequired: number;
+  used: boolean;
+  expiresAt: string;
+}
+
+export interface MemberAccount {
+  id: string;
+  phone: string;
+  email: string;
+  name: string;
+  isEmailVerified: boolean;
+  verificationCode?: string;
+  verificationStatus?: 'verified' | 'pending_admin_review'; // 已驗證 或 待管理者手動審核
+  manualVerifiedBy?: string; // 管理者手動審核人員
+  manualVerifiedAt?: string; // 手動審核時間
+  applicationSource?: 'pos' | 'portal_online'; // 申請來源：POS前台或獨立申請網頁
+  tier: 'bronze' | 'silver' | 'gold'; // 銅級茶友, 銀級茶客, 金級茶師
+  points: number;
+  totalSpent: number;
+  joinedDate: string;
+  birthday?: string;
+  avatarColor?: string;
+  coupons: MemberCoupon[];
+}
+
+export interface MemberPurchaseRecord {
+  id: string;
+  orderNumber: string;
+  memberId: string;
+  memberName: string;
+  memberPhone: string;
+  timestamp: string;
+  items: {
+    drinkName: string;
+    size: 'M' | 'L';
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
+  }[];
+  totalAmount: number;
+  pointsEarned: number;
+  pointsRedeemed?: number;
+  paymentMethod: string;
+}
+
 export interface CompletedOrder {
   orderNumber: string;
   timestamp: string;
@@ -103,4 +153,9 @@ export interface CompletedOrder {
   change?: number;
   orderType: '外帶' | '內用' | '外送';
   carrierNumber?: string;
+  memberId?: string;
+  memberName?: string;
+  memberPhone?: string;
+  pointsEarned?: number;
+  pointsRedeemed?: number;
 }

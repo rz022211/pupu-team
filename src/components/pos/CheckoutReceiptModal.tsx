@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { POSCartItem, CompletedOrder } from '../../types/pos';
-import { X, CheckCircle2, Printer, CreditCard, Banknote, Smartphone, QrCode } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { POSCartItem, CompletedOrder, MemberAccount } from '../../types/pos';
+import { X, CheckCircle2, Printer, CreditCard, Banknote, Smartphone, QrCode, Award, Phone, User } from 'lucide-react';
 import { bobaAudio } from '../../utils/audio';
 
 interface CheckoutReceiptModalProps {
@@ -12,6 +12,10 @@ interface CheckoutReceiptModalProps {
   subtotal: number;
   discount: number;
   total: number;
+  member?: MemberAccount | null;
+  members?: MemberAccount[];
+  pointsEarned?: number;
+  onSelectMember?: (m: MemberAccount | null) => void;
   onOrderComplete: (order: CompletedOrder) => void;
 }
 
@@ -24,6 +28,10 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
   subtotal,
   discount,
   total,
+  member,
+  members = [],
+  pointsEarned = Math.floor(total / 50),
+  onSelectMember,
   onOrderComplete,
 }) => {
   const [paymentMethod, setPaymentMethod] = useState<'現金' | 'LINE Pay' | '街口支付' | '信用卡'>('現金');
@@ -32,6 +40,15 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
   const [isReceiptPrinting, setIsReceiptPrinting] = useState<boolean>(false);
   const [printedOrder, setPrintedOrder] = useState<CompletedOrder | null>(null);
 
+  // Phone lookup in checkout modal
+  const [currentMember, setCurrentMember] = useState<MemberAccount | null>(member || null);
+  const [phoneInput, setPhoneInput] = useState<string>('');
+  const [phoneSearchMsg, setPhoneSearchMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentMember(member || null);
+  }, [member, isOpen]);
+
   if (!isOpen) return null;
 
   const changeDue = Math.max(0, cashTendered - total);
@@ -39,6 +56,9 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
   const handleConfirmPay = () => {
     bobaAudio.playSeal();
     setIsReceiptPrinting(true);
+
+    const activeMember = currentMember;
+    const calculatedPoints = activeMember ? Math.floor(total / 50) : 0;
 
     const newOrder: CompletedOrder = {
       orderNumber: `#01${Math.floor(41 + Math.random() * 50)}`,
@@ -52,6 +72,10 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
       change: paymentMethod === '現金' ? changeDue : 0,
       orderType,
       carrierNumber: carrierCode.trim() || undefined,
+      memberId: activeMember?.id,
+      memberName: activeMember?.name,
+      memberPhone: activeMember?.phone,
+      pointsEarned: calculatedPoints,
     };
 
     setPrintedOrder(newOrder);
@@ -140,6 +164,118 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Customer Member Confirmation by Phone */}
+            <div className="p-3 bg-[#14161C] border border-[#2D3240] rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-amber-400" />
+                  <span>顧客報手機號碼確認會員集點</span>
+                </span>
+                <span className="text-[10px] text-amber-400 font-mono">每 NT$50 累積 1 點</span>
+              </div>
+
+              {!currentMember ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="輸入顧客手機號碼 (例: 0912-345-678)..."
+                      value={phoneInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPhoneInput(val);
+                        setPhoneSearchMsg(null);
+                        const clean = val.replace(/[^0-9]/g, '');
+                        if (clean.length >= 4 && members.length > 0) {
+                          const m = members.find((x) => x.phone.replace(/[^0-9]/g, '').includes(clean));
+                          if (m) {
+                            setCurrentMember(m);
+                            if (onSelectMember) onSelectMember(m);
+                            bobaAudio.playSeal();
+                          }
+                        }
+                      }}
+                      className="flex-1 bg-[#1A1D27] border border-[#2D3242] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-stone-500 font-mono focus:outline-none focus:border-amber-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const clean = phoneInput.replace(/[^0-9]/g, '');
+                        const m = members.find((x) => x.phone.replace(/[^0-9]/g, '').includes(clean));
+                        if (m) {
+                          setCurrentMember(m);
+                          if (onSelectMember) onSelectMember(m);
+                          bobaAudio.playSeal();
+                        } else {
+                          bobaAudio.playIceClink();
+                          setPhoneSearchMsg('查無此手機會員！');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      確認手機
+                    </button>
+                  </div>
+
+                  {/* Fast sample phone tags */}
+                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar text-[10px]">
+                    <span className="text-stone-500 shrink-0">快填手機:</span>
+                    {members.slice(0, 3).map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setCurrentMember(m);
+                          setPhoneInput(m.phone);
+                          if (onSelectMember) onSelectMember(m);
+                          bobaAudio.playSeal();
+                        }}
+                        className="px-1.5 py-0.5 rounded bg-[#1C1F2B] hover:bg-[#282D3D] text-stone-300 hover:text-white border border-[#2D3242] font-mono shrink-0 transition-colors"
+                      >
+                        {m.phone} ({m.name.split(' ')[0]})
+                      </button>
+                    ))}
+                  </div>
+
+                  {phoneSearchMsg && (
+                    <span className="text-[10px] text-red-400 block">{phoneSearchMsg}</span>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-[#1C1F2B] border border-emerald-500/40 rounded-lg p-2.5 flex items-center justify-between animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>{currentMember.name}</span>
+                        <span className="text-[10px] font-mono text-amber-300">({currentMember.phone})</span>
+                      </div>
+                      <div className="text-[10px] text-stone-400">
+                        {currentMember.tier === 'gold' ? '金級茶師' : currentMember.tier === 'silver' ? '銀級茶客' : '銅級茶友'} · 目前點數: {currentMember.points} 點
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold text-emerald-400">
+                      本單累積 +{Math.floor(total / 50)} 點
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentMember(null);
+                        setPhoneInput('');
+                        if (onSelectMember) onSelectMember(null);
+                      }}
+                      className="text-[10px] text-stone-400 hover:text-white px-2 py-0.5 rounded bg-[#252936]"
+                    >
+                      更換
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment Method Selector */}
@@ -311,6 +447,20 @@ export const CheckoutReceiptModal: React.FC<CheckoutReceiptModalProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Member Loyalty Section on Receipt if Applicable */}
+              {printedOrder.memberPhone && (
+                <div className="py-2 border-b border-dashed border-stone-400 space-y-0.5 bg-stone-100 p-2 rounded">
+                  <div className="flex justify-between font-bold text-stone-900">
+                    <span>★ 會員積點服務</span>
+                    <span>{printedOrder.memberName}</span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-stone-600 font-mono">
+                    <span>會員手機: {printedOrder.memberPhone}</span>
+                    <span className="font-bold text-amber-800">+{printedOrder.pointsEarned || 0} 點</span>
+                  </div>
+                </div>
+              )}
 
               {/* Barcode / Carrier & Store QR Code */}
               <div className="pt-3 text-center space-y-2.5">
